@@ -147,4 +147,27 @@ describe('endpoints', () => {
     
     expect(res.body).toEqual(leadActress);
   });
+
+  it('gets all actresses via GET', async() => {
+    const leadActresses = await Promise.all([
+      {
+        name: 'Kate Winslet',
+        movieId: LeadActress.movie_id
+      },
+      {
+        name: 'Claire Danes',
+        movieId: LeadActress.movie_id
+      },
+      {
+        name: 'Toni Collette Winslet',
+        movieId: LeadActress.movie_id
+      }
+    ].map(leadActress => LeadActress.insert(leadActress)));
+  
+    const res = await request(app)
+      .get('/actresses');
+        
+    expect(res.body).toEqual(expect.arrayContaining(leadActresses));
+    expect(res.body).toHaveLength(leadActresses.length);
+  });
 });
