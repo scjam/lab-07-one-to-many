@@ -1,6 +1,8 @@
+const { O_TRUNC } = require('constants');
 const fs = require('fs');
 const request = require('supertest');
 const app = require('../lib/app');
+const Movie = require('../lib/models/Movie');
 const pool = require('../lib/utils/pool');
 
 describe('endpoints', () => {
@@ -27,5 +29,18 @@ describe('endpoints', () => {
       director: 'James Cameron',
       year: 1997
     });
+  });
+
+  it('finds a movie by id via GET', async() => {
+    const movie = await Movie.insert({
+      title: 'Titanic',
+      director: 'James Cameron',
+      year: '1997'
+    });
+
+    const res = await request(app)
+      .get(`/movies/${movie.id}`);
+
+    expect(res.body).toEqual(movie);
   });
 });
