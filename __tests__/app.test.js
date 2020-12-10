@@ -6,8 +6,14 @@ const Movie = require('../lib/models/Movie');
 const LeadActress = require('../lib/models/LeadActress');
 
 describe('endpoints', () => {
-  beforeEach(() => {
-    return pool.query(fs.readFileSync('./sql/setup.sql', 'utf-8'));
+  let movie;
+  beforeEach(async() => {
+    await pool.query(fs.readFileSync('./sql/setup.sql', 'utf-8'));
+    movie = await Movie.insert({
+      title: 'Titanic',
+      director: 'James Cameron',
+      year: 1997
+    });
   });
 
   afterAll(() => {
@@ -24,7 +30,7 @@ describe('endpoints', () => {
       });
 
     expect(res.body).toEqual({
-      id: '1',
+      id: '2',
       title: 'Titanic',
       director: 'James Cameron',
       year: '1997'
@@ -76,7 +82,7 @@ describe('endpoints', () => {
       .get('/movies');
       
     expect(res.body).toEqual(expect.arrayContaining(movies));
-    expect(res.body).toHaveLength(movies.length);
+    expect(res.body).toHaveLength(movies.length + 1);
   });
 
   it('updates a movie via PUT', async() => {
@@ -115,4 +121,30 @@ describe('endpoints', () => {
     expect(res.body).toEqual(movie);
   });
 
+  it('creates a new lead actress via POST', async() => {
+    const res = await request(app)
+      .post('/actresses')
+      .send({
+        name: 'Kate Winslet',
+        movieId: movie.id
+      });
+
+    expect(res.body).toEqual({
+      id: '1',
+      name: 'Kate Winslet',
+      movieId: movie.id
+    });
+  });
+
+  it('gets an actress by id via GET', async() => {
+    const leadActress = await LeadActress.insert({
+      name: 'Kate Winslet',
+      movieId: movie.id
+    });
+
+    const res = await request(app)
+      .get(`/actresses/${leadActress.id}`);
+    
+    expect(res.body).toEqual(leadActress);
+  });
 });
