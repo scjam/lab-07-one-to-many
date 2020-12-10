@@ -7,12 +7,17 @@ const LeadActress = require('../lib/models/LeadActress');
 
 describe('endpoints', () => {
   let movie;
+  let leadActress;
   beforeEach(async() => {
     await pool.query(fs.readFileSync('./sql/setup.sql', 'utf-8'));
     movie = await Movie.insert({
       title: 'Titanic',
       director: 'James Cameron',
       year: 1997
+    });
+    leadActress = await LeadActress.insert({
+      name: 'Kate Winslet',
+      movieId: movie.id
     });
   });
 
@@ -86,12 +91,6 @@ describe('endpoints', () => {
   });
 
   it('updates a movie via PUT', async() => {
-    const movie = await Movie.insert({
-      title: 'Titanic',
-      director: 'James Cameron',
-      year: '1997'
-    });
-
     const res = await request(app)
       .put(`/movies/${movie.id}`)
       .send({
@@ -125,23 +124,18 @@ describe('endpoints', () => {
     const res = await request(app)
       .post('/actresses')
       .send({
-        name: 'Kate Winslet',
+        name: 'Claire Danes',
         movieId: movie.id
       });
 
     expect(res.body).toEqual({
-      id: '1',
-      name: 'Kate Winslet',
+      id: '2',
+      name: 'Claire Danes',
       movieId: movie.id
     });
   });
 
   it('gets an actress by id via GET', async() => {
-    const leadActress = await LeadActress.insert({
-      name: 'Kate Winslet',
-      movieId: movie.id
-    });
-
     const res = await request(app)
       .get(`/actresses/${leadActress.id}`);
     
@@ -168,6 +162,28 @@ describe('endpoints', () => {
       .get('/actresses');
         
     expect(res.body).toEqual(expect.arrayContaining(leadActresses));
-    expect(res.body).toHaveLength(leadActresses.length);
+    expect(res.body).toHaveLength(leadActresses.length + 1);
+  });
+
+  it('updates an actress via PUT', async() => {
+    const res = await request(app)
+      .put(`/actresses/${leadActress.id}`)
+      .send({
+        name: 'Kate E. Winslet',
+        movieId: movie.id
+      });
+
+    expect(res.body).toEqual({
+      id: leadActress.id,
+      name: 'Kate E. Winslet',
+      movieId: movie.id
+    });
+  });
+
+  it('deletes an actress via DELETE', async() => {
+    const res = await request(app)
+      .delete(`/actresses/${leadActress.id}`);
+
+    expect(res.body).toEqual(leadActress);
   });
 });
