@@ -1,8 +1,9 @@
 const fs = require('fs');
+const pool = require('../lib/utils/pool');
 const request = require('supertest');
 const app = require('../lib/app');
 const Movie = require('../lib/models/Movie');
-const pool = require('../lib/utils/pool');
+const LeadActress = require('../lib/models/LeadActress');
 
 describe('endpoints', () => {
   beforeEach(() => {
@@ -30,17 +31,26 @@ describe('endpoints', () => {
     });
   });
 
-  it('finds a movie by id via GET', async() => {
+  it('finds a movie by id and associated lead actress via GET', async() => {
     const movie = await Movie.insert({
       title: 'Titanic',
       director: 'James Cameron',
       year: '1997'
     });
 
+    const leadActresses = await Promise.all([
+      { name: 'Kate Winslet', movieId: movie.id },
+      { name: 'Claire Danes', movieId: movie.id },
+      { name: 'Toni Collette', movieId: movie.id }
+    ].map(leadActress => LeadActress.insert(leadActress)));
+
     const res = await request(app)
       .get(`/movies/${movie.id}`);
-
-    expect(res.body).toEqual(movie);
+    
+    expect(res.body).toEqual({
+      ...movie,
+      leadActresses: expect.arrayContaining(leadActresses)
+    });
   });
 
   it('finds all movies via GET', async() => {
